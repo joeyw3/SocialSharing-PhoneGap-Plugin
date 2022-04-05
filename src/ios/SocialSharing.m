@@ -97,14 +97,17 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
 
     if (filenames != (id)[NSNull null] && filenames != nil && filenames.count > 0) {
       NSMutableArray *files = [[NSMutableArray alloc] init];
+      int fileNumber = 0;
       for (NSString* filename in filenames) {
         NSObject *file = [self getImage:filename];
         if (file == nil) {
-          file = [self getFile:filename];
+          file = [self getFile:filename,fileNumber];
         }
         if (file != nil) {
           [files addObject:file];
         }
+
+        fileNumber++;
       }
       [activityItems addObjectsFromArray:files];
     }
@@ -377,8 +380,9 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
     if ([command.arguments objectAtIndex:5] != (id)[NSNull null]) {
       NSArray* attachments = [command.arguments objectAtIndex:5];
       NSFileManager* fileManager = [NSFileManager defaultManager];
+      int fileNumber = 0;
       for (NSString* path in attachments) {
-        NSURL *file = [self getFile:path];
+        NSURL *file = [self getFile:path,fileNumber];
         NSData* data = [fileManager contentsAtPath:file.path];
 
         if (!data) {
@@ -418,6 +422,8 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
               data = [SocialSharing dataFromBase64String:base64content];
           }
           [self.globalMailComposer addAttachmentData:data mimeType:mimeType fileName:fileName];
+
+          fileNumber++;
       }
     }
 
@@ -510,7 +516,7 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
     if (image != nil && image != (id)[NSNull null]) {
       BOOL canSendAttachments = [[MFMessageComposeViewController class] respondsToSelector:@selector(canSendAttachments)];
       if (canSendAttachments) {
-        NSURL *file = [self getFile:image];
+        NSURL *file = [self getFile:image,0];
         if (file != nil) {
           [picker addAttachmentURL:file withAlternateFilename:nil];
         }
@@ -749,7 +755,7 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
   return image;
 }
 
--(NSURL*)getFile: (NSString *)fileName {
+-(NSURL*)getFile: (NSString *)fileName, fileNumber {
   NSURL *file = nil;
   if (fileName != (id)[NSNull null]) {
     NSRange rangeData = [fileName rangeOfString:@"data:"];
@@ -789,7 +795,12 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
         NSRange rangeDF = [fileName rangeOfString:@"df:"];
         //If not found fallback to default name
         if (rangeDF.location == NSNotFound) {
-            attachmentName = @"attachment.";
+            if(fileNumber) {
+              attachmentName = [NSString stringWithFormat:@"%s_%d.", "attachment", fileNumber];
+            } else {
+              attachmentName = @"attachment.";
+            }
+
             attachmentName = [attachmentName stringByAppendingString:(NSString*)[[fileType componentsSeparatedByString: @"/"] lastObject]];
         } else {
             //Found, apply name
