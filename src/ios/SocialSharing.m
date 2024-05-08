@@ -755,7 +755,7 @@ static NSString *const kShareOptionIPadCoordinates = @"iPadCoordinates";
   return image;
 }
 
--(NSURL*)getFile: (NSString *)fileName, fileNumber {
+-(NSURL*)getFile: (NSString *)fileName, int fileNumber {
   NSURL *file = nil;
   if (fileName != (id)[NSNull null]) {
     NSRange rangeData = [fileName rangeOfString:@"data:"];
